@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/leetcode-golang-classroom/golang-project-management-system/config"
 	"github.com/leetcode-golang-classroom/golang-project-management-system/internal/storage"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func WithJWTAuth(handlerFunc http.HandlerFunc, store storage.Store) http.HandlerFunc {
@@ -17,7 +18,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store storage.Store) http.Handler
 		// vaildate the token
 		token, err := validateJWT(tokenString)
 		if err != nil {
-			log.Println("failed to authenticate token")
+			log.Println("failed to authenticate token", err)
 			permissionDenied(w)
 			return
 		}
@@ -63,9 +64,17 @@ func GetTokenFromRequest(r *http.Request) string {
 func validateJWT(tokenString string) (*jwt.Token, error) {
 	secret := config.Envs.JWTSecret
 	return jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return []byte(secret), nil
 	})
+}
+
+func HashPassword(pw string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
 }
