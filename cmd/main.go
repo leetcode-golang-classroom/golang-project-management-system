@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/go-sql-driver/mysql"
@@ -27,6 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 	store := storage.NewStore(db)
-	api_server := api.NewAPIServer(":3000", store)
+	serviceAddr := fmt.Sprintf(":%v", config.Envs.Port)
+	api_server := api.NewAPIServer(serviceAddr, store)
 	api_server.Serve()
 }

@@ -1,0 +1,56 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: "${PORT}"
+      DB_USER: "${MYSQL_USER}"
+      JWT_SECRET: "${JWT_SECRET}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+      DB_NAME: "${MYSQL_DATABASE}"
+      DB_PORT: "${MYSQL_PORT}"
+      DB_HOST: mysql
+    ports:
+      - "${PORT}:${PORT}"
+    networks:
+      - mysql
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options: 
+        max-size: "1k"
+        max-file: "3"
+  db: 
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+    ports:
+      - "${MYSQL_PORT}:${MYSQL_PORT}"
+    expose:
+      - "${PORT}"
+    volumes:
+      - ./data:/var/lib/mysql
+    logging:
+      driver: "json-file"
+      options: 
+        max-size: "1k"
+        max-file: "3"
+    networks:
+      - mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+networks:
+  mysql:
+   name: mysql

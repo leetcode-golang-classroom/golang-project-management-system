@@ -1,7 +1,7 @@
 .PHONY=build
 
 build:
-	@go build -o bin/main cmd/main.go
+	@CGO_ENABLED=0 GOOS=linux go build -o bin/main cmd/main.go
 
 run: build
 	@./bin/main
